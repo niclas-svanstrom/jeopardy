@@ -41,7 +41,7 @@ class JeopardyGame(QWidget):
                        500: 'Vad kallas en grupp pandor?'},
         }
 
-        self.player_points = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+        self.player_points = {'Q': 0, 'Z': 0, 'P': 0, 'M': 0}
         self.current_question_points = 0
         self.fastest_player = None
         self.current_player = None
@@ -59,7 +59,6 @@ class JeopardyGame(QWidget):
         title_label.setStyleSheet("QLabel { color: gold; } background-color: black; }")
         main_layout.addWidget(title_label)
 
-        # Skapa en palett för att ändra bakgrundsfärgen på knapparna
         palette = QPalette()
         palette.setColor(QPalette.Button, QColor(255, 200, 0))
 
@@ -118,16 +117,19 @@ class JeopardyGame(QWidget):
             result = question_dialog.exec_()
             self.fastest_player = question_dialog.fastest_player
             self.fastest_players = question_dialog.fastest_players
-
             if result == QDialog.Accepted:
                 self.player_points[self.fastest_player] += amount
-            for p in self.fastest_players:
-                self.player_points[p] -= amount
-                if self.player_points[p] < 0:
-                    self.player_points[p] = 0
+                for p in self.fastest_players:
+                    if p == None:
+                        continue
+                    self.player_points[p] -= amount
+                    if self.player_points[p] < 0:
+                        self.player_points[p] = 0
             if result == QDialog.Rejected:
                 if len(self.fastest_players) > 0:
                     for p in self.fastest_players:
+                        if p == None:
+                            continue
                         self.player_points[p] -= amount
                         if self.player_points[p] < 0:
                             self.player_points[p] = 0
@@ -148,24 +150,21 @@ class QuestionDialog(QDialog):
     def __init__(self, question, parent=None):
         super().__init__(parent)
         self.setWindowTitle('Question')
-                # Sätt storleken på dialogrutan
         self.resize(1400, 900)
 
         screen_geometry = QApplication.desktop().screenGeometry()
 
-        # Beräkna positionen för att centrera dialogrutan
         x = (screen_geometry.width() - self.width()) // 2
         y = (screen_geometry.height() - self.height()) // 2
 
-        # Sätt positionen för dialogrutan
         self.move(x, y)
 
         self.fastest_player = None
         self.fastest_players = set()
-        self.atimer = None
-        self.btimer = None
-        self.ctimer = None
-        self.dtimer = None
+        self.qtimer = None
+        self.ztimer = None
+        self.ptimer = None
+        self.mtimer = None
 
         layout = QVBoxLayout()
 
@@ -180,7 +179,6 @@ class QuestionDialog(QDialog):
         layout.addWidget(self.progress_bar)
 
         self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.update_progress)
         self.time_left = 4000
         self.progress_step = 40
 
@@ -194,14 +192,14 @@ class QuestionDialog(QDialog):
 
         self.correct_button = QPushButton('Rätt')
         self.correct_button.clicked.connect(self.correct_answer)
-        self.correct_button.setStyleSheet("QPushButton { background-color: darkblue; color: gold; }")  # Ändra färgerna här
+        self.correct_button.setStyleSheet("QPushButton { background-color: darkblue; color: gold; }")
         self.correct_button.setFixedHeight(100)
         self.correct_button.setVisible(False)
         button_layout.addWidget(self.correct_button)
 
         self.wrong_button = QPushButton('Fel')
         self.wrong_button.clicked.connect(self.wrong_answer)
-        self.wrong_button.setStyleSheet("QPushButton { background-color: darkblue; color: gold; }")  # Ändra färgerna här
+        self.wrong_button.setStyleSheet("QPushButton { background-color: darkblue; color: gold; }")
         self.wrong_button.setFixedHeight(100)
         self.wrong_button.setVisible(False)
         button_layout.addWidget(self.wrong_button)
@@ -229,63 +227,60 @@ class QuestionDialog(QDialog):
             return
         if self.time_left > 0:
             pressed_key = event.key()
-            if pressed_key == Qt.Key_A:
-                if self.atimer is None:
-                    self.atimer = QTimer(self)
-                    self.atimer.timeout.connect(lambda: self.timeout_function(self.atimer))
-                    self.atimer.start(300)
-                    print(self.atimer)
-            elif pressed_key == Qt.Key_B:
-                if self.btimer is None:
-                    self.btimer = QTimer(self)
-                    self.btimer.timeout.connect(lambda: self.timeout_function(self.btimer))
-                    self.btimer.start(300)
-            elif pressed_key == Qt.Key_C:
-                if self.ctimer is None:
-                    self.ctimer = QTimer(self)
-                    self.ctimer.timeout.connect(lambda: self.timeout_function(self.ctimer))
-                    self.ctimer.start(300)
-            elif pressed_key == Qt.Key_D:
-                if self.dtimer is None:
-                    self.dtimer = QTimer(self)
-                    self.dtimer.timeout.connect(lambda: self.timeout_function(self.dtimer))
-                    self.dtimer.start(300)
-            # Ignorera knapptryckningar om tiden inte har tagit slut
-            # return
+            if pressed_key == Qt.Key_Q:
+                if self.qtimer is None:
+                    self.qtimer = QTimer(self)
+                    self.qtimer.timeout.connect(lambda: self.timeout_function(self.qtimer))
+                    self.qtimer.start(500)
+                    print(self.qtimer)
+            elif pressed_key == Qt.Key_Z:
+                if self.ztimer is None:
+                    self.ztimer = QTimer(self)
+                    self.ztimer.timeout.connect(lambda: self.timeout_function(self.ztimer))
+                    self.ztimer.start(500)
+            elif pressed_key == Qt.Key_P:
+                if self.ptimer is None:
+                    self.ptimer = QTimer(self)
+                    self.ptimer.timeout.connect(lambda: self.timeout_function(self.ptimer))
+                    self.ptimer.start(500)
+            elif pressed_key == Qt.Key_M:
+                if self.mtimer is None:
+                    self.mtimer = QTimer(self)
+                    self.mtimer.timeout.connect(lambda: self.timeout_function(self.mtimer))
+                    self.mtimer.start(500)
         pressed_key = event.key()
         if not self.fastest_player:
-            if pressed_key == Qt.Key_A and not self.atimer:
-                self.show_fastest_player('A')
-                self.set_fastest_player('A')
+            if pressed_key == Qt.Key_Q and not self.qtimer:
+                self.show_fastest_player('Q')
+                self.set_fastest_player('Q')
                 self.show_answer_buttons()
-            elif pressed_key == Qt.Key_B and not self.btimer:
-                self.show_fastest_player('B')
-                self.set_fastest_player('B')
+            elif pressed_key == Qt.Key_Z and not self.ztimer:
+                self.show_fastest_player('Z')
+                self.set_fastest_player('Z')
                 self.show_answer_buttons()
-            elif pressed_key == Qt.Key_C and not self.ctimer:
-                self.show_fastest_player('C')
-                self.set_fastest_player('C')
+            elif pressed_key == Qt.Key_P and not self.ptimer:
+                self.show_fastest_player('P')
+                self.set_fastest_player('P')
                 self.show_answer_buttons()
-            elif pressed_key == Qt.Key_D and not self.dtimer:
-                self.show_fastest_player('D')
-                self.set_fastest_player('D')
+            elif pressed_key == Qt.Key_M and not self.mtimer:
+                self.show_fastest_player('M')
+                self.set_fastest_player('M')
                 self.show_answer_buttons()
-        print(self.fastest_players)
 
     def timeout_function(self, timer):
         if timer is not None:
-            if timer == self.atimer:
-                self.atimer.stop()
-                self.atimer = None
-            elif timer == self.btimer:
-                self.btimer.stop()
-                self.btimer = None
-            elif timer == self.ctimer:
-                self.ctimer.stop()
-                self.ctimer = None
-            elif timer == self.dtimer:
-                self.dtimer.stop()
-                self.dtimer = None
+            if timer == self.qtimer:
+                self.qtimer.stop()
+                self.qtimer = None
+            elif timer == self.ztimer:
+                self.ztimer.stop()
+                self.ztimer = None
+            elif timer == self.ptimer:
+                self.ptimer.stop()
+                self.ptimer = None
+            elif timer == self.mtimer:
+                self.mtimer.stop()
+                self.mtimer = None
     
     def show_answer_buttons(self):
         self.correct_button.setVisible(True)
